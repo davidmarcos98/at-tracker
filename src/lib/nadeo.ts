@@ -21,6 +21,8 @@ interface TotdMap {
   year?: number;
 }
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 class NadeoClient {
   private username: string;
   private password: string;
@@ -63,20 +65,29 @@ class NadeoClient {
 
     const data: TokenResponse = await response.json();
     this.accessToken = data.accessToken;
+    console.log("token : ", data);
 
     return this.accessToken;
   }
+
+
 
   private async makeRequest<T>(endpoint: string): Promise<T> {
     let token = await this.getAccessToken();
     const url = `${this.apiBase}${endpoint}`;
 
+    console.log("Request to Nadeo: ", endpoint.split('?')[0]);
     const response = await fetch(url, {
       headers: {
         'Authorization': `nadeo_v1 t=${token}`,
         'Accept': 'application/json',
       },
     });
+
+    console.log({
+        'Authorization': `nadeo_v1 t=${token}`,
+        'Accept': 'application/json',
+      })
 
     if (!response.ok) {
       throw new Error(`Nadeo API error: ${response.status} ${response.statusText}`);
@@ -85,13 +96,15 @@ class NadeoClient {
     return response.json();
   }
 
-  async getTodMap(): Promise<any> {
+  async getTotdMapsCurrentMonth(backwardsMonths: number = 0): Promise<any> {
     const parsedResponse: any[] = [];
-    const response: any = await this.makeRequest('/api/token/campaign/month?length=1&offset=0&royal=false');
+    const response: any = await this.makeRequest(`/api/token/campaign/month?length=1&offset=${backwardsMonths}&royal=false`);
     for (let month of response.monthList) {
+        console.log(`Getting maps info for month: ${month.month}/${month.year}`);
+        let mapsInfo = await this.getMapDetailsMultiple([...month.days.map((day: { mapUid: string; }) => day.mapUid).filter((uid: string) => uid != "")]);
         for (let map of month.days) {
             if (map.mapUid == "") continue; // Skip getting details for empty (future) maps
-            let parsedMap = await this.getMapDetails(map.mapUid);
+            let parsedMap = mapsInfo[map.mapUid];
             parsedResponse.push({
                 ...parsedMap,
                 day: map.monthDay,
@@ -99,8 +112,31 @@ class NadeoClient {
                 year: month.year,
             });
         }
+        await delay(2000);
     }
     return {data: parsedResponse}
+  }
+
+  async getMapDetailsMultiple(mapIds: string[]): Promise<TotdMap[]> {
+    const mapsInfo = await this.makeRequest<any>(`/api/token/map/get-multiple?mapUidList=${mapIds.join(',')}`);
+
+    return mapsInfo.mapList.map((map: { mapId: any; uid: any; name: any; author: any; goldTime: any; silverTime: any; bronzeTime: any; authorTime: any; nbLaps: any; thumbnailUrl: any; downloadUrl: any; }) => ({
+        mapId: map.mapId,
+        mapUid: map.uid,
+        name: map.name,
+        authorAccountId: map.author,
+        authorDisplayName: 'Unknown',
+        goldTime: map.goldTime,
+        silverTime: map.silverTime,
+        bronzeTime: map.bronzeTime,
+        at: map.authorTime,
+        laps: map.nbLaps,
+        thumbnail: map.thumbnailUrl,
+        download: map.downloadUrl,    
+    })).reduce((acc: any, map: TotdMap) => {
+        acc[map.mapUid] = map;
+        return acc;
+    }, {});
   }
 
   async getMapDetails(mapId: string): Promise<TotdMap> {

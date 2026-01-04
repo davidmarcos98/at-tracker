@@ -14,14 +14,14 @@ export async function GET(request: NextRequest) {
       //maps = await nadeoClient.getTotdMaps(new Date(startDate), new Date(endDate));
     } else {
       // Fetch current TOTD map
-      const map = await nadeoClient.getTodMap();
+      const map = await nadeoClient.getTotdMapsCurrentMonth();
       maps = [map];
     }
 
     return NextResponse.json({
       success: true,
-      data: maps,
-      count: maps.length,
+      ...maps[0],
+      count: maps[0].data.length,
     });
   } catch (error) {
     console.error('Error fetching TOTD maps:', error);
