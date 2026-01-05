@@ -72,7 +72,7 @@ export default function Home() {
       headerName: 'Map Name',
       flex: 2,
       minWidth: 200,
-      renderCell: (params: { value: any; }) => (
+      renderCell: (params: any) => (
         <div dangerouslySetInnerHTML={{ __html: params.value }} />
       ),
     },
@@ -108,7 +108,7 @@ export default function Home() {
       flex: 0.8,
       minWidth: 80,
       sortable: false,
-      renderCell: (params: { value: any; }) => (
+      renderCell: (params: any) => (
         <a
           href={`https://trackmania.io/#/leaderboard/${params.value}`}
           target="_blank"
@@ -170,7 +170,6 @@ export default function Home() {
                   paginationModel: { pageSize: 25, page: 0 },
                 },
               }}
-              disableSelectionOnClick
               sx={{
                 fontSize: '0.8rem',
                 '& .MuiDataGrid-root': {

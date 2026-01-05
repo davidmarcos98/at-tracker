@@ -185,7 +185,7 @@ class NadeoClient {
         console.log(`Getting maps info for month: ${month.month}/${month.year}`);
         let mapsInfo = await this.getMapDetailsMultiple([...month.days.map((map: { mapUid: string; }) => map.mapUid).filter((uid: string) => uid != "")]);
         //let mapsAtCount = await this.getAtCountMultiple([...month.days.map((map: { mapUid: string; }) => ({mapUid: map.mapUid, at: mapsInfo[map.mapUid]?.at})).filter((map: { mapUid: string; }) => map.mapUid != "")]);
-        console.log(month.days.length)
+        console.log(month.days.length)  
         for (let map of month.days) {
             if (map.mapUid == "") {
                 console.log(map);
@@ -236,7 +236,8 @@ class NadeoClient {
         at: map.authorTime,
         laps: map.nbLaps,
         thumbnail: map.thumbnailUrl,
-        download: map.downloadUrl,    
+        download: map.downloadUrl,
+        actCount: 0,
     })).reduce((acc: any, map: TotdMap) => {
         acc[map.mapUid] = map;
         return acc;
@@ -257,7 +258,8 @@ class NadeoClient {
         at: response.authorTime,
         laps: response.nbLaps,
         thumbnail: response.thumbnailUrl,
-        download: response.downloadUrl,      
+        download: response.downloadUrl,
+        atCount: 0,
     };
   }
 
