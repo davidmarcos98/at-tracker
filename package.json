@@ -9,7 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@heroui/react": "^2.8.7",
+    "@mui/material": "^7.3.6",
+    "@mui/x-data-grid": "^8.23.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "framer-motion": "^12.23.26",
@@ -17,6 +21,7 @@
     "postgres": "^3.4.7",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "tm-text": "^1.1.0",
     "tsx": "^4.21.0"
   },
   "devDependencies": {

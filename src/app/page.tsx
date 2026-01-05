@@ -1,65 +1,196 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { Box, CircularProgress } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+const { tmText } = require('tm-text');
+
+interface Map {
+  id: number;
+  name: string;
+  mapUid: string;
+  atCount: number;
+  year?: number;
+  month?: number;
+  day?: number;
+  authorPlayer?: {
+    displayName: string;
+  };
+}
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    background: {
+      default: '#000000',
+      paper: '#1a1a1a',
+    },
+  },
+});
+
+const lightTheme = createTheme({
+  palette: {
+    mode: 'light',
+  },
+});
 
 export default function Home() {
+  const [maps, setMaps] = useState<Map[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }, []);
+
+  useEffect(() => {
+    const fetchMaps = async () => {
+      try {
+        const response = await fetch('/api/nadeo/totdAtCount');
+        const result = await response.json();
+        if (result.success) {
+          result.data.forEach((map: any) => {
+            map.name = tmText(map.name).htmlify();
+          });
+          setMaps(result.data.sort((a: Map, b: Map) => a.atCount - b.atCount));
+        }
+      } catch (error) {
+        console.error('Failed to fetch maps:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMaps();
+  }, []);
+
+  const columns: GridColDef[] = [
+    {
+      field: 'name',
+      headerName: 'Map Name',
+      flex: 2,
+      minWidth: 200,
+      renderCell: (params: { value: any; }) => (
+        <div dangerouslySetInnerHTML={{ __html: params.value }} />
+      ),
+    },
+    {
+      field: 'date',
+      headerName: 'Date',
+      flex: 1,
+      minWidth: 120,
+      valueGetter: (params: any, row: Map) => {
+        if (row.year && row.month && row.day) {
+          return `${row.year}-${String(row.month).padStart(2, '0')}-${String(row.day).padStart(2, '0')}`;
+        }
+        return 'N/A';
+      },
+    },
+    {
+      field: 'author',
+      headerName: 'Author',
+      flex: 1.5,
+      minWidth: 150,
+      valueGetter: (params: any, row: Map) => row.authorPlayer?.displayName || 'Unknown',
+    },
+    {
+      field: 'atCount',
+      headerName: 'AT Count',
+      flex: 1,
+      minWidth: 120,
+      type: 'number',
+    },
+    {
+      field: 'mapUid',
+      headerName: 'Link',
+      flex: 0.8,
+      minWidth: 80,
+      sortable: false,
+      renderCell: (params: { value: any; }) => (
+        <a
+          href={`https://trackmania.io/#/leaderboard/${params.value}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: isDark ? '#60a5fa' : '#2563eb', textDecoration: 'underline' }}
+        >
+          View
+        </a>
+      ),
+    },
+  ];
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  const theme = isDark ? darkTheme : lightTheme;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          bgcolor: isDark ? '#000000' : '#f3f4f6',
+          p: 4,
+        }}
+      >
+        <Box sx={{ maxWidth: '75%', mx: 'auto' }}>
+          <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', marginBottom: '2rem', color: isDark ? '#fff' : '#000' }}>
+            Trackmania Maps
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p style={{ marginBottom: '1.5rem', color: isDark ? '#9ca3af' : '#6b7280' }}>
+            Total: {maps.length} maps
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+          <Box
+            sx={{
+              height: 600,
+              bgcolor: isDark ? '#1a1a1a' : '#fff',
+              borderRadius: 1,
+              boxShadow: 1,
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <DataGrid
+              rows={maps}
+              columns={columns}
+              pageSizeOptions={[10, 25, 50, 100]}
+              initialState={{
+                pagination: {
+                  paginationModel: { pageSize: 25, page: 0 },
+                },
+              }}
+              disableSelectionOnClick
+              sx={{
+                fontSize: '0.8rem',
+                '& .MuiDataGrid-root': {
+                  border: isDark ? '1px solid #333' : '1px solid #e5e7eb',
+                },
+                '& .MuiDataGrid-virtualScroller': {
+                  '&::-webkit-scrollbar': {
+                    display: 'none',
+                  },
+                  msOverflowStyle: 'none',
+                  scrollbarWidth: 'none',
+                },
+                '& .MuiDataGrid-scrollbarContent': {
+                  display: 'none',
+                },
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 }

@@ -19,8 +19,8 @@ export async function saveTotdMap(mapData: TotdMap) {
     if (existingAuthor.length > 0) {
       authorId = existingAuthor[0].id;
     } else {
-      // Create new player entry for the author
-      return "Author not found in database";
+      // TODO what do we do with missing players?
+      authorId = 6747883 // Unknown user
     }
   }
 
@@ -41,15 +41,16 @@ export async function saveTotdMap(mapData: TotdMap) {
       .update(maps)
       .set({
         name: mapData.name,
-        at: mapData.goldTime,
-        gold: mapData.goldTime,
-        silver: mapData.silverTime,
-        bronze: mapData.bronzeTime,
+        medalAuthor: mapData.goldTime,
+        medalGold: mapData.goldTime,
+        medalSilver: mapData.silverTime,
+        medalBronze: mapData.bronzeTime,
         author: authorId,
         year,
         month,
         day,
         isTotd: true,
+        atCount: mapData.atCount,
       })
       .where(eq(maps.mapUid, mapData.mapUid));
 
@@ -58,21 +59,21 @@ export async function saveTotdMap(mapData: TotdMap) {
     // Insert new map
     const result = await db
       .insert(maps)
-      .values({
-        name: mapData.name,
+      .values({ // @ts-ignore why is it red nobody knows
+        name: mapData.name, 
         mapId: mapData.mapId,
         mapUid: mapData.mapUid,
         tmxId: '', // Will need to be populated from another source
         author: authorId,
-        at: mapData.goldTime,
-        gold: mapData.goldTime,
-        silver: mapData.silverTime,
-        bronze: mapData.bronzeTime,
+        medalAuthor: mapData.goldTime,
+        medalGold: mapData.goldTime,
+        medalSilver: mapData.silverTime,
+        medalBronze: mapData.bronzeTime,
         year,
         month,
         day,
         isTotd: true,
-        atCount: 0,
+        atCount: mapData.atCount,
       })
       .returning({ id: maps.id });
 
