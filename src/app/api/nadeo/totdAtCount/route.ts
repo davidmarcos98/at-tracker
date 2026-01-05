@@ -32,13 +32,26 @@ export async function GET(request: NextRequest) {
           displayName: true,
         }
       }
-    }
+    },
+    orderBy: (maps, { desc }) => [
+      desc(maps.year),
+      desc(maps.month)
+    ]
   });
-
+  const tracks: any[] = [];
+  for (const map of data) {
+    if (tracks.length == 0 || tracks.at(-1).month !== map.month) {
+      tracks.push({
+        year: map.year,
+        month: map.month,
+        tracks: []
+      })
+    }
+    tracks.at(-1).tracks.push(map);
+  }
+  
   return NextResponse.json({
-    success: true,
-    count: data.length,
-    data,
+    tracks: tracks
   });
     
 }

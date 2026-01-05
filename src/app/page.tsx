@@ -73,7 +73,7 @@ export default function Home() {
       flex: 2,
       minWidth: 200,
       renderCell: (params: any) => (
-        <div dangerouslySetInnerHTML={{ __html: params.value }} />
+        <div dangerouslySetInnerHTML={{ __html: tmText(params.value).htmlify() }} />
       ),
     },
     {
@@ -155,23 +155,23 @@ export default function Home() {
 
           <Box
             sx={{
-              height: 600,
+              height: "auto",
               bgcolor: isDark ? '#1a1a1a' : '#fff',
               borderRadius: 1,
               boxShadow: 1,
             }}
           >
             <DataGrid
-              rows={maps}
+              rows={maps.sort((a: Map, b: Map) => a.atCount - b.atCount)}
               columns={columns}
               pageSizeOptions={[10, 25, 50, 100]}
               initialState={{
                 pagination: {
-                  paginationModel: { pageSize: 25, page: 0 },
+                  paginationModel: { pageSize: 10, page: 0 },
                 },
               }}
               sx={{
-                fontSize: '0.8rem',
+                fontSize: '0.9rem',
                 '& .MuiDataGrid-root': {
                   border: isDark ? '1px solid #333' : '1px solid #e5e7eb',
                 },
