@@ -48,13 +48,15 @@ export default function Home() {
   useEffect(() => {
     const fetchMaps = async () => {
       try {
-        const response = await fetch('/api/nadeo/totdAtCount');
+        const response = await fetch('/api/nadeo/totdAtCountRaw');
+        console.log(response)
         const result = await response.json();
-        if (result.success) {
-          result.data.forEach((map: any) => {
+        console.log(result)
+        if (result.tracks) {
+          result.tracks.forEach((map: any) => {
             map.name = tmText(map.name).htmlify();
           });
-          setMaps(result.data.sort((a: Map, b: Map) => a.atCount - b.atCount));
+          setMaps(result.tracks.sort((a: Map, b: Map) => a.atCount - b.atCount));
         }
       } catch (error) {
         console.error('Failed to fetch maps:', error);
