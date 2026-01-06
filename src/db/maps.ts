@@ -41,7 +41,7 @@ export async function saveTotdMap(mapData: TotdMap) {
       .update(maps)
       .set({
         name: mapData.name,
-        medalAuthor: mapData.goldTime,
+        medalAuthor: mapData.at,
         medalGold: mapData.goldTime,
         medalSilver: mapData.silverTime,
         medalBronze: mapData.bronzeTime,
@@ -65,7 +65,7 @@ export async function saveTotdMap(mapData: TotdMap) {
         mapUid: mapData.mapUid,
         tmxId: '', // Will need to be populated from another source
         author: authorId,
-        medalAuthor: mapData.goldTime,
+        medalAuthor: mapData.at,
         medalGold: mapData.goldTime,
         medalSilver: mapData.silverTime,
         medalBronze: mapData.bronzeTime,

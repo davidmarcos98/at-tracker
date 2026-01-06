@@ -27,7 +27,17 @@ export const maps = pgTable('maps', {
   laps: integer('laps').notNull().default(1),
   thumbnailUrl: text('thumbnail_url'),
   downloadUrl: text('download_url'),
+  lastLeaderboardUpdate: timestamp('last_leaderboard_update').defaultNow(),
 });
+
+export const entries = pgTable('entries', {
+  id: serial('id').primaryKey(),
+  mapId: integer('map_id').references(() => maps.id),
+  playerId: integer('player_id').references(() => players.id),
+  time: integer('time').notNull(),
+  date: timestamp('date').notNull(),
+  isAt: boolean('is_at').notNull().default(true),
+})
 
 export const mapsRelations = relations(players, ({ many }) => ({
     maps: many(maps),

@@ -263,6 +263,41 @@ class NadeoClient {
     };
   }
 
+  async getLeaderboardUpToAuthorMedal(mapUid: string, authorMedalScore: number): Promise<any[]> {
+    const allRecords: any[] = [];
+    let offset = 0;
+    const limit = 100;
+    let finished = false;
+
+    while (!finished) {
+      const response = await this.makeRequest<any>(`/api/token/leaderboard/group/Personal_Best/map/${mapUid}/top?onlyWorld=true&length=${limit}&offset=${offset}`);
+      
+      if (!response.tops || !response.tops[0] || !response.tops[0].top || response.tops[0].top.length === 0) {
+        finished = true;
+        break;
+      }
+
+      for (const record of response.tops[0].top) {
+        // Stop once we get to a record slower than the author medal
+        console.log(record.score, authorMedalScore, record.position);
+        if (record.score > authorMedalScore) {
+          finished = true;
+          break;
+        }
+        allRecords.push(record);
+      }
+
+      // If we got fewer records than requested, we've reached the end of the leaderboard
+      if (response.tops[0].top.length < limit) {
+        finished = true;
+      }
+
+      offset += limit;
+    }
+
+    return allRecords;
+  }
+
 }
 
 export const nadeoClient = new NadeoClient();
