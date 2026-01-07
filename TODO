@@ -1,0 +1,8 @@
+[] Maplist local admin page 
+    [] Button to refresh at count for the map 
+    [] Show leaderboard
+    [] Show last update time
+[] AT Leaderboard
+    [] Show ranking
+    [] Admin button to refresh player's missing maps 
+    [] Admin button to favorite player (which then will be autorefreshed by cron jobs)
