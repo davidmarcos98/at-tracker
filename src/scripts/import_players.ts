@@ -15,7 +15,7 @@ async function importPlayers() {
       accountId: accountId as string,
     }));
     
-    const batchSize = 8000;
+    const batchSize = 20000;
     for (let i = 0; i < values.length; i += batchSize) {
       const batch = values.slice(i, i + batchSize);
       await db.insert(players).values(batch).onConflictDoNothing();

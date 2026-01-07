@@ -7,7 +7,8 @@ async function fetchTotd() {
 
     // TODO january 24th 2025 missing?
     
-    for (let backwardsMonths = 52; backwardsMonths < 67; backwardsMonths++) {
+    //for (let backwardsMonths = 0; backwardsMonths < 67; backwardsMonths++) {
+    for (let backwardsMonths = 0; backwardsMonths < 1; backwardsMonths++) {
         console.log(backwardsMonths, " backwards");
         const maps = await nadeoClient.getTotdMapsCurrentMonth(backwardsMonths);
         for (const map of maps.data) {

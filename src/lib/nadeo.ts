@@ -47,6 +47,8 @@ class NadeoClient {
   private personalUbiTicketExpiresAt: number = 0;
   private personalAccessToken: string | null = null;
   private personalAccessTokenExpiresAt: number = 0;
+  private coreApiAccessToken: string | null = null;
+  private coreApiTokenExpiresAt: number = 0;
   
   
   constructor() {
@@ -59,7 +61,7 @@ class NadeoClient {
     this.apiBase = process.env.NADEO_API_BASE || 'https://prod.api.nadeolive.com';
 
     if (!this.username || !this.password || !this.userAgent) {
-      throw new Error('Missing NADEO_SERVER_USERNAME or NADEO_SERVER_PASSWORD or NADEO_USER_AGENT environment variables');
+      console.warn('Missing NADEO_SERVER_USERNAME or NADEO_SERVER_PASSWORD or NADEO_USER_AGENT environment variables');
     }
   }
 
@@ -97,7 +99,7 @@ class NadeoClient {
     }
 
     if (!this.personalUsername || !this.personalPassword) {
-      throw new Error('Missing NADEO_PERSONAL_USERNAME or NADEO_PERSONAL_PASSWORD environment variables');
+      console.warn('Missing NADEO_PERSONAL_USERNAME or NADEO_PERSONAL_PASSWORD environment variables');
     }
 
     const credentials = Buffer.from(`${this.personalUsername}:${this.personalPassword}`).toString('base64');
@@ -150,6 +152,41 @@ class NadeoClient {
     return this.personalAccessToken;
   }
 
+  private async getAccessTokenForAudience(audience: string): Promise<string> {
+    // Handle NadeoServices audience (Core API)
+    if (audience === 'NadeoServices') {
+      if (this.coreApiAccessToken && Date.now() < this.coreApiTokenExpiresAt) {
+        return this.coreApiAccessToken;
+      }
+
+      const ubiTicket = await this.getUbiTicket();
+
+      const response = await fetch('https://prod.trackmania.core.nadeo.online/v2/authentication/token/ubiservices', {
+        method: 'POST',
+        headers: {
+          'Authorization': `ubi_v1 t=${ubiTicket}`,
+          'Content-Type': 'application/json',
+          'User-Agent': this.userAgent,
+        },
+        body: JSON.stringify({ audience: 'NadeoServices' }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to authenticate with Nadeo API for ${audience}: ${response.statusText}`);
+      }
+
+      const data: TokenResponse = await response.json();
+      this.coreApiAccessToken = data.accessToken;
+      this.coreApiTokenExpiresAt = Date.now() + (55 * 60 * 1000);
+      console.log(`Got token for audience: ${audience}`);
+
+      return this.coreApiAccessToken;
+    }
+
+    // Default to NadeoLiveServices
+    return this.getAccessToken();
+  }
+
   private async makeRequest<T>(endpoint: string): Promise<T> {
     let token: string;
     if (process.env.NADEO_PERSONAL_USERNAME) {
@@ -169,7 +206,36 @@ class NadeoClient {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        console.warn('Token expired...');
+        await delay(2000);
+        this.personalAccessToken = null;
+        return this.makeRequest<T>(endpoint);
+      }
       throw new Error(`Nadeo API error: ${response.status} ${response.statusText}`);
+    }
+
+    // add delay to respect Nadeo API rate limits
+    await delay(1500);
+
+    return response.json();
+  }
+
+  private async makeRequestCoreApi<T>(endpoint: string): Promise<T> {
+    const token = await this.getAccessTokenForAudience('NadeoServices');
+    const url = `https://prod.trackmania.core.nadeo.online${endpoint}`;
+
+    console.log("Request to Core API: ", endpoint.split('?')[0]);
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `nadeo_v1 t=${token}`,
+        'Accept': 'application/json',
+        'User-Agent': this.userAgent,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Core API error: ${response.status} ${response.statusText}`);
     }
 
     // add delay to respect Nadeo API rate limits
@@ -263,23 +329,23 @@ class NadeoClient {
     };
   }
 
-  async getLeaderboardUpToAuthorMedal(mapUid: string, authorMedalScore: number): Promise<any[]> {
+  async getLeaderboardUpToAuthorMedal(mapUid: string, authorMedalScore: number, atCount: number): Promise<any[]> {
     const allRecords: any[] = [];
     let offset = 0;
     const limit = 100;
     let finished = false;
 
     while (!finished) {
+      process.stdout.write(`${limit + offset}/${atCount} `);
       const response = await this.makeRequest<any>(`/api/token/leaderboard/group/Personal_Best/map/${mapUid}/top?onlyWorld=true&length=${limit}&offset=${offset}`);
       
-      if (!response.tops || !response.tops[0] || !response.tops[0].top || response.tops[0].top.length === 0) {
+      if (!response.tops || !response.tops[0] || !response.tops[0].top || response.tops[0].top.length === 0 || offset > atCount) {
         finished = true;
         break;
       }
 
       for (const record of response.tops[0].top) {
         // Stop once we get to a record slower than the author medal
-        console.log(record.score, authorMedalScore, record.position);
         if (record.score > authorMedalScore) {
           finished = true;
           break;
@@ -296,6 +362,21 @@ class NadeoClient {
     }
 
     return allRecords;
+  }
+
+  async getUserRecordsOnMap(accountIds: string[], mapId: string, authorMedalScore: number): Promise<Array<{accountId: string; time: number; isAT: boolean; timestamp: string;}>> {
+    const accountIdList = accountIds.join(',');
+    
+    const response = await this.makeRequestCoreApi<any[]>(`/v2/mapRecords/by-account/?accountIdList=${accountIdList}&mapId=${mapId}`);
+    
+    const results = response.map((record: any) => ({
+      accountId: record.accountId,
+      time: record.recordScore.time,
+      isAT: record.recordScore.time <= authorMedalScore,
+      timestamp: record.timestamp,
+    }));
+
+    return results;
   }
 
 }

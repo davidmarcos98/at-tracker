@@ -7,26 +7,20 @@ import { eq } from 'drizzle-orm';
  * Save or update a TOTD map in the database
  */
 export async function saveTotdMap(mapData: TotdMap) {
-  let authorId = null;
-  // Check if author exists
-  if (mapData.authorAccountId) {
-    const existingAuthor = await db
-      .select()
-      .from(players)
-      .where(eq(players.accountId, mapData.authorAccountId))
-      .limit(1);
-
-    if (existingAuthor.length > 0) {
-      authorId = existingAuthor[0].id;
-    } else {
-      // TODO what do we do with missing players?
-      authorId = 6747883 // Unknown user
-    }
-  }
 
   const year = mapData.year;
   const month = mapData.month;
   const day = mapData.day;
+
+  // Check if player with authorAccountId exists
+  const authorPlayer = await db
+    .select()
+    .from(players)
+    .where(eq(players.accountId, mapData.authorAccountId))
+    .limit(1);
+  if (authorPlayer.length === 0) {
+    mapData.authorAccountId = "000000"
+  }
 
   // Check if map already exists
   const existingMap = await db
@@ -45,7 +39,7 @@ export async function saveTotdMap(mapData: TotdMap) {
         medalGold: mapData.goldTime,
         medalSilver: mapData.silverTime,
         medalBronze: mapData.bronzeTime,
-        author: authorId,
+        author: mapData.authorAccountId,
         year,
         month,
         day,
@@ -54,7 +48,7 @@ export async function saveTotdMap(mapData: TotdMap) {
       })
       .where(eq(maps.mapUid, mapData.mapUid));
 
-    return existingMap[0].id;
+    return existingMap[0].mapUid;
   } else {
     // Insert new map
     const result = await db
@@ -63,8 +57,7 @@ export async function saveTotdMap(mapData: TotdMap) {
         name: mapData.name, 
         mapId: mapData.mapId,
         mapUid: mapData.mapUid,
-        tmxId: '', // Will need to be populated from another source
-        author: authorId,
+        author: mapData.authorAccountId,
         medalAuthor: mapData.at,
         medalGold: mapData.goldTime,
         medalSilver: mapData.silverTime,
@@ -75,7 +68,7 @@ export async function saveTotdMap(mapData: TotdMap) {
         isTotd: true,
         atCount: mapData.atCount,
       })
-      .returning({ id: maps.id });
+      .returning({ id: maps.mapUid });
 
     return result.length > 0 ? result[0].id : null;
   }
