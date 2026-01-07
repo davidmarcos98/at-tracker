@@ -49,12 +49,11 @@ export default function Home() {
     const fetchMaps = async () => {
       try {
         const response = await fetch('/api/nadeo/totdAtCountRaw');
-        console.log(response)
         const result = await response.json();
-        console.log(result)
         if (result.tracks) {
           result.tracks.forEach((map: any) => {
             map.name = tmText(map.name).htmlify();
+            map.id = map.mapUid;
           });
           setMaps(result.tracks.sort((a: Map, b: Map) => a.atCount - b.atCount));
         }
