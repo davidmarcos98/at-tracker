@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  authortracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://neondb_owner:npg_N4lsS2McTUkx@ep-gentle-tree-abt6shlf-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
