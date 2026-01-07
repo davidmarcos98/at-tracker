@@ -2,22 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Paper, Typography } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-const { tmText } = require('tm-text');
-
-interface Map {
-  id: number;
-  name: string;
-  mapUid: string;
+interface LeaderboardEntry {
+  playerId: string;
+  playerName: string;
   atCount: number;
-  year?: number;
-  month?: number;
-  day?: number;
-  authorPlayer?: {
-    displayName: string;
-  };
 }
 
 const darkTheme = createTheme({
@@ -36,8 +27,8 @@ const lightTheme = createTheme({
   },
 });
 
-export default function Home() {
-  const [maps, setMaps] = useState<Map[]>([]);
+export default function LeaderboardPage() {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(false);
 
@@ -46,150 +37,120 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const fetchMaps = async () => {
+    const fetchLeaderboard = async () => {
       try {
-        const response = await fetch('/api/nadeo/totdAtCountRaw');
+        const response = await fetch('/api/leaderboard');
         const result = await response.json();
-        if (result.tracks) {
-          result.tracks.forEach((map: any) => {
-            map.name = tmText(map.name).htmlify();
-            map.id = map.mapUid;
-          });
-          setMaps(result.tracks.sort((a: Map, b: Map) => a.atCount - b.atCount));
+        if (result.success && result.leaderboard) {
+          setLeaderboard(result.leaderboard);
         }
       } catch (error) {
-        console.error('Failed to fetch maps:', error);
+        console.error('Failed to fetch leaderboard:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMaps();
+    fetchLeaderboard();
   }, []);
 
   const columns: GridColDef[] = [
     {
-      field: 'name',
-      headerName: 'Map Name',
-      flex: 2,
-      minWidth: 200,
-      renderCell: (params: any) => (
-        <div dangerouslySetInnerHTML={{ __html: tmText(params.value).htmlify() }} />
-      ),
-    },
-    {
-      field: 'date',
-      headerName: 'Date',
-      flex: 1,
-      minWidth: 120,
-      valueGetter: (params: any, row: Map) => {
-        if (row.year && row.month && row.day) {
-          return `${row.year}-${String(row.month).padStart(2, '0')}-${String(row.day).padStart(2, '0')}`;
-        }
-        return 'N/A';
+      field: 'rank',
+      headerName: 'Rank',
+      flex: 0.5,
+      minWidth: 80,
+      sortable: false,
+      valueGetter: (params: any, row: any, col: any) => {
+        const index = leaderboard.indexOf(row);
+        return index + 1;
       },
     },
     {
-      field: 'author',
-      headerName: 'Author',
+      field: 'displayName',
+      headerName: 'Player',
       flex: 1.5,
-      minWidth: 150,
-      valueGetter: (params: any, row: Map) => row.authorPlayer?.displayName || 'Unknown',
+      valueGetter: (params: any, row: any, col: any) => {
+        return {value: row.displayName, accountId: row.accountId } 
+      },
+      renderCell: (params: any) => (
+        <a
+          href={`/player/${params.value.accountId}`}
+          rel="noopener noreferrer"
+          style={{ color: "white", textDecoration: 'none' }}
+        >
+          {params.value.value}
+        </a>
+      ),
     },
     {
       field: 'atCount',
       headerName: 'AT Count',
-      flex: 1,
-      minWidth: 120,
+      flex: 1.2,
       type: 'number',
-    },
-    {
-      field: 'mapUid',
-      headerName: 'Link',
-      flex: 0.8,
-      minWidth: 80,
-      sortable: false,
-      renderCell: (params: any) => (
-        <a
-          href={`https://trackmania.io/#/leaderboard/${params.value}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: isDark ? '#60a5fa' : '#2563eb', textDecoration: 'underline' }}
-        >
-          View
-        </a>
-      ),
+      renderCell: (params: any) => {
+        return (
+          <div className='inline-flex items-center gap-2'>
+            <p className='font-bold'>
+              {params.value}
+            </p>
+            <img style={{ height: "30px", width: "30px" }} src="/medal_author.png">
+            </img>
+          </div>
+        )
+      }
     },
   ];
 
-  if (loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   const theme = isDark ? darkTheme : lightTheme;
+    if (loading) {
+        return (
+        <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            minHeight="100vh"
+        >
+            <CircularProgress />
+        </Box>
+        );
+    }
 
   return (
     <ThemeProvider theme={theme}>
       <Box
+        display="flex-inline"
+        justifyContent="center"
+        alignItems="center"
+        className="mb-[20px]"
         sx={{
+          width: '100%',
+          padding: 2,
+          backgroundColor: theme.palette.background.default,
           minHeight: '100vh',
-          bgcolor: isDark ? '#000000' : '#f3f4f6',
-          p: 4,
         }}
       >
-        <Box sx={{ maxWidth: '75%', mx: 'auto' }}>
-          <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', marginBottom: '2rem', color: isDark ? '#fff' : '#000' }}>
-            Trackmania Maps
-          </h1>
-          <p style={{ marginBottom: '1.5rem', color: isDark ? '#9ca3af' : '#6b7280' }}>
-            Total: {maps.length} maps
-          </p>
+        <Paper sx={{ padding: 3, width: '30%', '@media (max-width: 780px)': {width: '95%'}, margin: '0 auto' }}>
+          <h4 className='font-black text-center text-4xl'>
+            AT Leaderboard
+          </h4>
+        </Paper>
 
-          <Box
-            sx={{
-              height: "auto",
-              bgcolor: isDark ? '#1a1a1a' : '#fff',
-              borderRadius: 1,
-              boxShadow: 1,
-            }}
-          >
+        <Paper sx={{ height: 'auto', width: '30%', '@media (max-width: 780px)': {width: '95%'}, margin: '20px auto' }}>
             <DataGrid
-              rows={maps.sort((a: Map, b: Map) => a.atCount - b.atCount)}
-              columns={columns}
-              pageSizeOptions={[10, 25, 50, 100]}
-              initialState={{
-                pagination: {
-                  paginationModel: { pageSize: 10, page: 0 },
-                },
-              }}
-              sx={{
-                fontSize: '0.9rem',
+                rows={leaderboard}
+                columns={columns}
+                getRowId={(row) => row.accountId}
+                hideFooter={true}
+                columnHeaderHeight={40}
+                sx={{
+                    fontSize: '1rem',
                 '& .MuiDataGrid-root': {
-                  border: isDark ? '1px solid #333' : '1px solid #e5e7eb',
+                    border: 'none',
                 },
-                '& .MuiDataGrid-virtualScroller': {
-                  '&::-webkit-scrollbar': {
-                    display: 'none',
-                  },
-                  msOverflowStyle: 'none',
-                  scrollbarWidth: 'none',
-                },
-                '& .MuiDataGrid-scrollbarContent': {
-                  display: 'none',
-                },
-              }}
+                }}
             />
-          </Box>
-        </Box>
+        </Paper>
       </Box>
     </ThemeProvider>
   );
