@@ -1,19 +1,17 @@
-import { pgTable, serial, integer, varchar, text, boolean, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, varchar, text, boolean, timestamp, unique } from 'drizzle-orm/pg-core';
 import { relations } from "drizzle-orm";
 
 export const players = pgTable('players', {
-  id: serial('id').primaryKey(),
   displayName: varchar('display_name', { length: 255 }),
-  accountId: varchar('account_id', { length: 255 }).notNull(),
+  accountId: varchar('account_id', { length: 255 }).notNull().primaryKey(),
 });
 
 export const maps = pgTable('maps', {
-  id: serial('id').primaryKey(),
   name: text('name').notNull(),
   mapId: varchar('map_id', { length: 255 }).notNull().unique(),
-  mapUid: varchar('map_uid', { length: 255 }).notNull().unique(),
-  tmxId: varchar('tmx_id', { length: 255 }).notNull().unique(),
-  author: integer('author').references(() => players.id),
+  mapUid: varchar('map_uid', { length: 255 }).notNull().unique().primaryKey(),
+  tmxId: varchar('tmx_id', { length: 255 }).unique(),
+  author: varchar('author_id', { length: 255 }).notNull().references(() => players.accountId),
   medalAuthor: integer('medal_author').notNull(),
   medalGold: integer('medal_gold').notNull(),
   medalSilver: integer('medal_silver').notNull(),
@@ -32,12 +30,13 @@ export const maps = pgTable('maps', {
 
 export const entries = pgTable('entries', {
   id: serial('id').primaryKey(),
-  mapId: integer('map_id').references(() => maps.id),
-  playerId: integer('player_id').references(() => players.id),
+  mapId: varchar('map_uid', { length: 255 }).notNull().references(() => maps.mapUid),
+  playerId: varchar('player_id', { length: 255 }).notNull().references(() => players.accountId),
   time: integer('time').notNull(),
+  rank: integer('rank').notNull(),
   date: timestamp('date').notNull(),
   isAt: boolean('is_at').notNull().default(true),
-})
+}, (t) => [unique('player_map').on(t.playerId, t.mapId)]);
 
 export const mapsRelations = relations(players, ({ many }) => ({
     maps: many(maps),
@@ -46,7 +45,7 @@ export const mapsRelations = relations(players, ({ many }) => ({
 export const authorRelation = relations(maps, ({ one }) => ({
     authorPlayer: one(players, {
         fields: [maps.author],
-        references: [players.id],
+        references: [players.accountId],
     }),
 }));
 

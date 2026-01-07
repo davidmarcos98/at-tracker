@@ -1,0 +1,1 @@
+ALTER TABLE "entries" ADD CONSTRAINT "player_map" UNIQUE("player_id","map_uid");
