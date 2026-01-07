@@ -1,0 +1,304 @@
+{
+  "id": "3534874d-3655-4385-9029-89c09495fe4f",
+  "prevId": "7dae3d2a-456d-45d7-b041-c8bf6630f340",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.entries": {
+      "name": "entries",
+      "schema": "",
+      "columns": {
+        "map_uid": {
+          "name": "map_uid",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time": {
+          "name": "time",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rank": {
+          "name": "rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_at": {
+          "name": "is_at",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "entries_map_uid_maps_map_uid_fk": {
+          "name": "entries_map_uid_maps_map_uid_fk",
+          "tableFrom": "entries",
+          "tableTo": "maps",
+          "columnsFrom": [
+            "map_uid"
+          ],
+          "columnsTo": [
+            "map_uid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "entries_player_id_players_account_id_fk": {
+          "name": "entries_player_id_players_account_id_fk",
+          "tableFrom": "entries",
+          "tableTo": "players",
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "account_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "player_map": {
+          "name": "player_map",
+          "nullsNotDistinct": false,
+          "columns": [
+            "player_id",
+            "map_uid"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.maps": {
+      "name": "maps",
+      "schema": "",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_uid": {
+          "name": "map_uid",
+          "type": "varchar(255)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tmx_id": {
+          "name": "tmx_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "author_id": {
+          "name": "author_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "medal_author": {
+          "name": "medal_author",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "medal_gold": {
+          "name": "medal_gold",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "medal_silver": {
+          "name": "medal_silver",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "medal_bronze": {
+          "name": "medal_bronze",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "month": {
+          "name": "month",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "day": {
+          "name": "day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_totd": {
+          "name": "is_totd",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "totd_date": {
+          "name": "totd_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "at_count": {
+          "name": "at_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "laps": {
+          "name": "laps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "thumbnail_url": {
+          "name": "thumbnail_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "download_url": {
+          "name": "download_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_leaderboard_update": {
+          "name": "last_leaderboard_update",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "maps_author_id_players_account_id_fk": {
+          "name": "maps_author_id_players_account_id_fk",
+          "tableFrom": "maps",
+          "tableTo": "players",
+          "columnsFrom": [
+            "author_id"
+          ],
+          "columnsTo": [
+            "account_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "maps_map_id_unique": {
+          "name": "maps_map_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "map_id"
+          ]
+        },
+        "maps_map_uid_unique": {
+          "name": "maps_map_uid_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "map_uid"
+          ]
+        },
+        "maps_tmx_id_unique": {
+          "name": "maps_tmx_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tmx_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.players": {
+      "name": "players",
+      "schema": "",
+      "columns": {
+        "display_name": {
+          "name": "display_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "varchar(255)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "at_count": {
+          "name": "at_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

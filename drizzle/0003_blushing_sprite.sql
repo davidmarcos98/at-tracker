@@ -1,0 +1,1 @@
+ALTER TABLE "players" ADD COLUMN "at_count" integer DEFAULT 0 NOT NULL;

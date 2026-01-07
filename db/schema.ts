@@ -4,6 +4,7 @@ import { relations } from "drizzle-orm";
 export const players = pgTable('players', {
   displayName: varchar('display_name', { length: 255 }),
   accountId: varchar('account_id', { length: 255 }).notNull().primaryKey(),
+  atCount: integer('at_count').notNull().default(0),
 });
 
 export const maps = pgTable('maps', {
@@ -29,7 +30,6 @@ export const maps = pgTable('maps', {
 });
 
 export const entries = pgTable('entries', {
-  id: serial('id').primaryKey(),
   mapId: varchar('map_uid', { length: 255 }).notNull().references(() => maps.mapUid),
   playerId: varchar('player_id', { length: 255 }).notNull().references(() => players.accountId),
   time: integer('time').notNull(),
@@ -48,6 +48,15 @@ export const authorRelation = relations(maps, ({ one }) => ({
         references: [players.accountId],
     }),
 }));
+
+export const entriesRelations = relations(entries, ({ one }) => ({
+    entryPlayer: one(players, {
+        fields: [entries.playerId],
+        references: [players.accountId],
+    }),
+}));
+
+
 
 
 
