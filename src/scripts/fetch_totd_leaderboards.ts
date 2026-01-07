@@ -40,6 +40,7 @@ async function fetchLeaderboardsForTotdMaps() {
             .update(maps)
             .set({
                 lastLeaderboardUpdate: new Date(),
+                atCount: insertData.length, // update at count 
             })
             .where(eq(maps.mapUid, map.mapUid));
 

@@ -4,7 +4,7 @@ import { db } from '@/src/db/index';
 import { entries, maps, players } from '@/db/schema';
 
 import { nadeoClient } from '@/src/lib/nadeo';
-import { asc, desc, eq,inArray, sql } from 'drizzle-orm';
+import { asc, and, eq,inArray, sql } from 'drizzle-orm';
 
 async function fetchLeaderboardsForTotdMaps() {
     const mapsToFetch = await db.select().from(maps).orderBy(asc(maps.lastLeaderboardUpdate))
@@ -88,6 +88,10 @@ async function fetchLeaderboardsForTotdMaps() {
                     rank: sql`excluded.rank`,
                 }
               });
+    }
+    for (const player of playersToCheck) {
+        let atEntries = await db.$count(entries, and(eq(entries.playerId, player), eq(entries.isAt, true)));
+        await db.update(players).set({atCount: atEntries}).where(eq(players.accountId, player));
     }
 
     return process.exit(1)
