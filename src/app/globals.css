@@ -34,3 +34,18 @@ div {
 "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", 
 "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
+
+@media (max-width: 768px) {
+  .mapsTable th:nth-child(2) {
+    display: none;
+  }
+  .mapsTable th:nth-child(3) {
+    display: none;
+  }
+  .mapsTable td:nth-child(2) {
+    display: none;
+  }
+  .mapsTable td:nth-child(3) {
+    display: none;
+  }
+}

@@ -3,22 +3,13 @@
 import { SVGProps, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
   Card,
   CardBody,
-  Button,
   Spinner,
   Progress,
-  Pagination,
-  Link,
-  Image,
-  Code
+  Link
 } from '@heroui/react';
+import MapsTable from '@/src/app/components/MapsTable';
 import { JSX } from 'react/jsx-runtime';
 
 export const AnchorIcon = (props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) => {
@@ -28,7 +19,6 @@ export const AnchorIcon = (props: JSX.IntrinsicAttributes & SVGProps<SVGSVGEleme
     </svg>
   );
 };
-const { tmText } = require('tm-text');
 
 interface PlayerMap {
   mapUid: string;
@@ -59,28 +49,15 @@ interface PlayerData {
   atCount: number;
 }
 
-interface SortDescriptor {
-  column: string;
-  direction: 'ascending' | 'descending';
-}
-
 export default function PlayerPage() {
   const params = useParams();
   const playerId = params.playerId as string;
 
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [maps, setMaps] = useState<PlayerMap[]>([]);
-  const [filteredMaps, setFilteredMaps] = useState<PlayerMap[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'complete' | 'incomplete'>('all');
   const [playerRank, setPlayerRank] = useState(0);
   const [totalMaps, setTotalMaps] = useState(0);
-  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-    column: 'date',
-    direction: 'descending',
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
 
   useEffect(() => {
     // No need for theme detection with HeroUI as it handles it automatically
@@ -108,85 +85,11 @@ export default function PlayerPage() {
     fetchPlayerData();
   }, [playerId]);
 
-  useEffect(() => {
-    let filtered = maps;
-
-    if (filter === 'complete') {
-      filtered = maps.filter((map) => map.isAt);
-    } else if (filter === 'incomplete') {
-      filtered = maps.filter((map) => !map.isAt);
-    }
-
-    // Sort the filtered maps
-    const sorted = [...filtered].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-
-      switch (sortDescriptor.column) {
-        case 'name':
-          aValue = a.name;
-          bValue = b.name;
-          break;
-        case 'date':
-          aValue = new Date(a.year, a.month - 1, a.day).getTime();
-          bValue = new Date(b.year, b.month - 1, b.day).getTime();
-          break;
-        case 'authorTime':
-          aValue = a.medalAuthor;
-          bValue = b.medalAuthor;
-          break;
-        case 'time':
-          aValue = a.time ?? Infinity;
-          bValue = b.time ?? Infinity;
-          break;
-        case 'atcount':
-          aValue = a.atCount;
-          bValue = b.atCount;
-          break;
-        default:
-          return 0;
-      }
-
-      if (aValue < bValue) {
-        return sortDescriptor.direction === 'ascending' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortDescriptor.direction === 'ascending' ? 1 : -1;
-      }
-      return 0;
-    });
-
-    setFilteredMaps(sorted);
-  }, [filter, maps, sortDescriptor]);
-
   const completedMaps = maps.filter((m) => m.isAt).length;
   const missingMaps = maps.length - completedMaps;
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredMaps.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedMaps = filteredMaps.slice(startIndex, endIndex);
-
-  function parseTime(time: number) {
-    const seconds = Math.floor(time / 1000);
-    const millis = time % 1000;
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-
-    return `${mins}:${String(secs).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
-  }
-
-  function parseTimeDifference(time: number) {
-    const seconds = Math.floor(time / 1000);
-    const millis = time % 1000;
-    const secs = seconds % 60;
-
-    return `${String(secs).padStart(1, '0')}.${String(millis).padStart(3, '0')}`;
-  }
-
   return (
-    <div className="w-[75%] p-4 min-h-screen" style={{ margin: 'auto' }}>
+    <div className="w-[98%] md:w-[80%] p-4 min-h-screen" style={{ margin: 'auto' }}>
     {loading ? (
         <div className="flex justify-center items-center min-h-[400px]">
             <Spinner />
@@ -195,147 +98,42 @@ export default function PlayerPage() {
         <div className="mb-[50px]">
             <Card className="mb-3 mt-4">
                 <CardBody className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <h1 className="font-bold h-[fit-content] align-left w-[100%] col-span-3" style={{ margin: 'auto' }}>
+                <div className="block md:grid grid-cols-1 md:grid-cols-8 gap-4">
+                    <h1 className="font-bold h-[fit-content] align-center md:align-left w-fit md:w-full md:col-span-4" style={{ margin: 'auto' }}>
                         { (player.displayName) ? 
-                            <Link isBlock color='foreground' isExternal showAnchorIcon anchorIcon={<AnchorIcon />} href={`https://trackmania.io/#/player/${player.accountId}`}>
+                            <Link style={{ margin: '0 auto' }} isBlock color='foreground' isExternal showAnchorIcon anchorIcon={<AnchorIcon />} href={`https://trackmania.io/#/player/${player.accountId}`}>
                                 <p className='text-5xl'>{player.displayName}</p>
                             </Link> :
                             'Unknown Player'
                         }
                     </h1>
-                    <Card isBlurred className="bg-default-100 outline-white" radius="md">
-                        <CardBody>
-                            <p className="text-sm text-default-500">Missing maps</p>
-                            <p className="text-2xl font-bold">{missingMaps}</p>
-                            <p className="text-sm text-default-500">Leaderboard Rank</p>
-                            <p className="text-2xl font-bold">#{playerRank}</p>
+                    <Card isBlurred className="bg-default-100 outline-white mt-6 md:mt-0 md:col-span-2" radius="md">
+                        <CardBody className='grid md:inline-flex grid-cols-2'>
+                          <div className='align-center'>
+                            <p className="text-sm text-default-500 text-center md:text-left">Leaderboard Rank</p>
+                            <p className="text-2xl font-bold text-center md:text-left">#{playerRank}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-default-500 text-center md:text-left">Missing maps</p>
+                            <p className="text-2xl font-bold text-center md:text-left">{missingMaps}</p>
+                          </div>
                         </CardBody>
                     </Card>
 
-                    <Card isBlurred className="bg-default-100 outline-green-400" radius="md">
+                    <Card isBlurred className="bg-default-100 outline-green-400 mt-6 md:mt-0 md:col-span-2" radius="md">
                         <CardBody>
-                            <p className="text-sm text-default-500">Maps Progress</p>
-                            <p className="text-2xl font-bold">
+                            <p className="text-sm text-default-500 text-center md:text-left">Maps Progress</p>
+                            <p className="text-2xl font-bold text-center md:text-left">
                                 {completedMaps}/{totalMaps}
                             </p>
-                            <Progress aria-label="Loading..." color="success" style={{ margin: 'auto', paddingTop: '10%'}} value={completedMaps*100/totalMaps} />
+                            <Progress aria-label="Loading..." color="success" className='pt-2 md:pt-[10%]' style={{ margin: 'auto' }} value={completedMaps*100/totalMaps} />
                         </CardBody>
                     </Card>
                 </div>
                 </CardBody>
             </Card>
 
-            {/* <div>
-                <div className="flex justify-end gap-3 items-center">
-                    <RadioGroup label="" value={filter} onValueChange={setFilter} orientation="horizontal">
-                        <Radio value="all">All</Radio>
-                        <Radio value="complete">Complete</Radio>
-                        <Radio value="incomplete">Incomplete</Radio>
-                    </RadioGroup>
-                </div>
-                <div className="flex justify-end gap-3 items-center mb-6">{filter == 'all' ? maps.length : (filter == 'complete' ? completedMaps : missingMaps)} matches</div>
-            </div> */}
-
-            <div className="flex justify-end gap-2 items-center mb-3">
-                <Button
-                    size="md"
-                    variant={filter === 'all' ? 'solid' : 'ghost'}
-                    onPress={() => setFilter('all')}
-                >
-                    All ({maps.length})
-                </Button>
-                <Button
-                    size="md"
-                    variant={filter === 'complete' ? 'solid' : 'ghost'}
-                    onPress={() => setFilter('complete')}
-                >
-                    Complete ({completedMaps})
-                </Button>
-                <Button
-                    size="md"
-                    variant={filter === 'incomplete' ? 'solid' : 'ghost'}
-                    onPress={() => setFilter('incomplete')}
-                >
-                    Incomplete ({missingMaps})
-                </Button>
-            </div>
-
-            <Table
-                aria-label="Player maps table"
-                sortDescriptor={sortDescriptor}
-                onSortChange={(descriptor: any) => {
-                    setSortDescriptor({
-                        column: descriptor.column,
-                        direction: descriptor.direction,
-                    });
-                    setCurrentPage(1); // Reset to first page when sorting
-                }}
-                bottomContent={
-                    <div className="flex w-full justify-center">
-                        <Pagination
-                            isCompact
-                            showControls
-                            showShadow
-                            color="primary"
-                            page={currentPage}
-                            total={totalPages}
-                            onChange={(page) => setCurrentPage(page)}
-                        />
-                    </div>
-                }
-            >
-                <TableHeader>
-                    <TableColumn key="name" allowsSorting className='text-sm font-bold'>
-                        Map Name
-                    </TableColumn>
-                    <TableColumn key="atcount" allowsSorting maxWidth={3} align='center' className='text-sm font-bold'>
-                        AT Count
-                    </TableColumn>
-                    <TableColumn key="date" allowsSorting maxWidth={5} align='center' className='text-sm font-bold'>
-                        Date
-                    </TableColumn>
-                    <TableColumn key="authorTime" allowsSorting maxWidth={5} align='center' className='text-sm font-bold'>
-                        Author Time
-                    </TableColumn>
-                    <TableColumn key="time" allowsSorting width={"15%"} align='center' className='text-sm font-bold'>
-                        Time
-                    </TableColumn>
-                </TableHeader>
-                <TableBody items={paginatedMaps} emptyContent="No maps found">
-                    {(item) => (
-                        <TableRow key={item.mapUid}>
-                            <TableCell>
-                                <Link isBlock color='foreground' isExternal showAnchorIcon href={`https://trackmania.io/#/leaderboard/${item.mapUid}`}>
-                                    <div
-                                        className='text-lg'
-                                        dangerouslySetInnerHTML={{
-                                        __html: tmText(item.name).htmlify(),
-                                        }}
-                                    />
-                                </Link>
-                            </TableCell>
-                            <TableCell className='text-md'>
-                                {item.atCount}
-                            </TableCell>
-                            <TableCell>
-                                <Code size="sm">
-                                    {String(item.day).padStart(2, '0')}/{String(item.month).padStart(2, '0')}/{item.year}
-                                </Code>
-                            </TableCell>
-                            <TableCell className='text-md'>{parseTime(item.medalAuthor)}</TableCell>
-                            <TableCell className='inline-flex items-center gap-2 text-md'>
-                                <Image src={item.isAt ? "/medal_author.png" : (item.time == null || item.time == undefined ? "/medal_none.png" : "/medal_gold.png")} width={28}></Image>
-                                {item.time === null || item.time === undefined
-                                ? 'Not played'
-                                : `${parseTime(item.time)} (${
-                                    item.time - item.medalAuthor > 0 ? '+' : '-'
-                                    }${parseTimeDifference(Math.abs(item.time - item.medalAuthor))})`}
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+            <MapsTable maps={maps}/>
         </div>
     ) : (
         <Card className="p-6 text-center">

@@ -17,7 +17,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head><script defer src="https://umami.socr.am/script.js" data-website-id="554a0dc1-0b89-4a54-9820-bcaddf180564"></script></head>
+      <head>
+        <script defer src="https://umami.socr.am/script.js" data-website-id="554a0dc1-0b89-4a54-9820-bcaddf180564"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </head>
       <body
       suppressHydrationWarning 
         className={`antialiased`}

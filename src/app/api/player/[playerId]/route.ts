@@ -29,7 +29,9 @@ export async function GET(
         mapUid: maps.mapUid,
         mapId: maps.mapId,
         name: maps.name,
-        author: maps.author,
+        authorPlayer: {
+          displayName: players.displayName,
+        },
         medalAuthor: maps.medalAuthor,
         medalGold: maps.medalGold,
         medalSilver: maps.medalSilver,
@@ -48,6 +50,7 @@ export async function GET(
       })
       .from(maps)
       .leftJoin(entries, and(eq(entries.mapId, maps.mapUid), eq(entries.playerId, playerId)))
+      .leftJoin(players, eq(maps.author, players.accountId))
       .orderBy(maps.year, maps.month, maps.day);
 
     // Count total maps
