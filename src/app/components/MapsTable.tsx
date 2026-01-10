@@ -104,9 +104,9 @@ export default function MapsTable({maps, playerMaps=true, pageSize=15}: {maps: P
     let filtered = maps;
 
     if (filter === 'complete') {
-      filtered = maps.filter((map) => map.isAt);
+      filtered = maps.filter((map) => map.isAt || (map.time && map.time < map.medalAuthor));
     } else if (filter === 'incomplete') {
-      filtered = maps.filter((map) => !map.isAt);
+      filtered = maps.filter((map) => !map.isAt || (map.time && map.time > map.medalAuthor));
     }
 
     filtered = filtered.filter((map) => tmText(map.name).humanize().toLowerCase().includes(search.toLowerCase()) || map.authorPlayer?.displayName.toLowerCase().includes(search.toLowerCase()) || map.author?.toLowerCase().includes(search.toLowerCase()))
@@ -136,7 +136,6 @@ export default function MapsTable({maps, playerMaps=true, pageSize=15}: {maps: P
     setMedalFilterOptions([...currentMedalOptions] as string[])
 
     if (playerMaps) {
-      console.log('a', selectedMedalOptions, filtered[0])
       filtered = filtered.filter((map) => selectedMedalOptions.has(map.currentMedal ?? "none"))
     }
     // Sort the filtered maps
@@ -369,7 +368,7 @@ export default function MapsTable({maps, playerMaps=true, pageSize=15}: {maps: P
         case 'time':
             return (
                 <div className='inline-flex items-center gap-2 text-md'>
-                    <Image src={item.isAt ? "/medal_author.png" : (item.time == null || item.time == undefined ? "/medal_none.png" : "/medal_gold.png")} width={28}></Image>
+                    <Image src={medalsMapping[item.currentMedal ?? "none"].src} width={28}></Image>
                     {item.time === null || item.time === undefined
                     ? 'Not played'
                     : `${parseTime(item.time)} (${
